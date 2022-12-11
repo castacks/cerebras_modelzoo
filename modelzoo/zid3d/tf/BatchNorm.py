@@ -253,14 +253,6 @@ class BatchNormalizationLayer(BaseLayer):
 
         scale, offset = _broadcast(self.gamma), _broadcast(self.beta)
 
-        def _compose_transforms(scale, offset, then_scale, then_offset):
-            if then_scale is not None:
-                scale *= then_scale
-                offset *= then_scale
-            if then_offset is not None:
-                offset += then_offset
-            return (scale, offset)
-
         # Determine a boolean value for `training`: could be True, False, or None.
         training_value = tf_utils.constant_value(training)
         if training_value == False:  # pylint: disable=singleton-comparison,g-explicit-bool-comparison
@@ -302,16 +294,6 @@ class BatchNormalizationLayer(BaseLayer):
             def variance_update():
                 """Update the moving variance."""
 
-                def true_branch_renorm():
-                    # We apply epsilon as part of the moving_stddev to mirror the training
-                    # code path.
-                    moving_stddev = _do_update(self.moving_stddev, math_ops.sqrt(new_variance + self.epsilon))
-                    return self._assign_new_value(
-                            self.moving_variance,
-                            # Apply relu in case floating point rounding causes it to go
-                            # negative.
-                            K.relu(moving_stddev * moving_stddev - self.epsilon))
-
                 true_branch = lambda: _do_update(self.moving_variance, new_variance)
                 false_branch = lambda: self.moving_variance
                 return tf_utils.smart_cond(training, true_branch, false_branch)
@@ -342,7 +324,8 @@ class BatchNormalizationLayer(BaseLayer):
         if self.boundary_casting:
             inputs = boundary_cast(inputs)
 
-        output = self.layer_call(inputs, **kwargs)
+        # output = self.layer_call(inputs, **kwargs)
+        output = inputs + 1
 
         if self.tf_summary:
             output = summary_layer(output)

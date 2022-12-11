@@ -223,4 +223,6 @@ class DAGM2007Dataset:
 
         dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
+        dataset = dataset.take(64)
+
         return dataset
