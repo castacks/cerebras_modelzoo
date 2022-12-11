@@ -29,6 +29,8 @@ class Zid3dModel(TFBaseModel):
             mixed_precision=params["model"]["mixed_precision"]
         )
 
+        self.num_output_channels = 1
+
         mparams = params["model"]
 
         self.initializer = mparams["initializer"]
@@ -45,9 +47,14 @@ class Zid3dModel(TFBaseModel):
                 tf.compat.v1.keras.initializers, self.bias_initializer
             )(**self.bias_initializer_params)
 
+        # CS util params for layers
+        self.boundary_casting = mparams["boundary_casting"]
         self.tf_summary = mparams["tf_summary"]
 
         self.mixed_precision = mparams["mixed_precision"]
+        
+        self.data_format = mparams["data_format"]
+        self.enable_bias = mparams["enable_bias"]
 
         # Model trainer
         self.trainer = Trainer(
@@ -68,17 +75,43 @@ class Zid3dModel(TFBaseModel):
                 tf_summary=self.tf_summary,
                 dtype=self.policy,
             )(x)
+            
+        ##### Output
+        logits = Conv2DLayer(
+            filters=self.num_output_channels,
+            kernel_size=1,
+            activation="linear",
+            padding="same",
+            name="output_conv",
+            data_format=self.data_format,
+            use_bias=self.enable_bias,
+            kernel_initializer=self.initializer,
+            bias_initializer=self.bias_initializer,
+            boundary_casting=self.boundary_casting,
+            tf_summary=self.tf_summary,
+            dtype=self.policy,
+        )(x)
 
-        return x
+        return logits
 
     def build_total_loss(self, logits, features, labels, mode):
+        # Get input image and corresponding gt mask.
         input_image = features
+        reshaped_mask_image = labels
 
         is_training = mode == tf.estimator.ModeKeys.TRAIN
 
+        # Flatten the logits
+        flatten = Flatten(
+            dtype="float16" if self.mixed_precision else "float32"
+        )
+        reshaped_logits = flatten(logits)
+
+        # Binary Cross-Entropy loss
         loss = tf.compat.v1.losses.sigmoid_cross_entropy(
-            features+1,
-            features,
+            reshaped_mask_image,
+            reshaped_logits,
+            loss_collection=None,
             reduction=Reduction.SUM_OVER_BATCH_SIZE,
         )
 
@@ -102,12 +135,54 @@ class Zid3dModel(TFBaseModel):
         Evaluation metrics
         """
 
-        pred = features
+        reshaped_mask_image = labels
+
+        reshaped_mask_image = tf.cast(reshaped_mask_image, dtype=tf.int32)
+
+        # Ensure channels are the last dimension for the rest of eval
+        # metric calculations. Otherwise, need to do the rest of ops
+        # according to the channels dimension
+        if self.data_format == "channels_first":
+            logits = tf.transpose(a=logits, perm=[0, 2, 3, 1])
+
+        pred = tf.reshape(
+            logits, [tf.shape(input=logits)[0], -1, self.num_output_channels],
+        )
+
+        if self.num_output_channels == 1:
+            pred = tf.concat(
+                [tf.ones(pred.shape, dtype=pred.dtype) - pred, pred], axis=-1
+            )
+
+        pred = tf.argmax(pred, axis=-1)
+
+        # ignore void classes
+        ignore_classes_tensor = tf.constant(
+            False, shape=reshaped_mask_image.shape, dtype=tf.bool
+        )
+        for ignored_class in self.eval_ignore_classes:
+            ignore_classes_tensor = tf.math.logical_or(
+                ignore_classes_tensor,
+                tf.math.equal(
+                    reshaped_mask_image,
+                    tf.constant(
+                        ignored_class,
+                        shape=reshaped_mask_image.shape,
+                        dtype=tf.int32,
+                    ),
+                ),
+            )
+
+        weights = tf.where(
+            ignore_classes_tensor,
+            tf.zeros_like(reshaped_mask_image),
+            tf.ones_like(reshaped_mask_image),
+        )
 
         metrics_dict = dict()
 
         metrics_dict["eval/accuracy"] = tf.compat.v1.metrics.accuracy(
-            labels=pred+1, predictions=pred,
+            labels=reshaped_mask_image, predictions=pred, weights=weights,
         )
 
         return metrics_dict
