@@ -27,7 +27,7 @@ import pandas as pd
 import tensorflow as tf
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../.."))
-from modelzoo.unet.tf.utils import get_params
+from modelzoo.zid3d.tf.utils import get_params
 
 
 def parse_args():

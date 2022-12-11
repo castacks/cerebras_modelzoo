@@ -33,9 +33,9 @@ from modelzoo.common.tf.run_utils import (
     save_params,
     update_params_from_args,
 )
-from modelzoo.unet.tf.data import eval_input_fn, train_input_fn
-from modelzoo.unet.tf.model import model_fn
-from modelzoo.unet.tf.utils import get_params
+from modelzoo.zid3d.tf.data import eval_input_fn, train_input_fn
+from modelzoo.zid3d.tf.model import model_fn
+from modelzoo.zid3d.tf.utils import get_params
 
 
 def create_arg_parser():

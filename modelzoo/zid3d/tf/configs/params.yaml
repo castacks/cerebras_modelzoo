@@ -64,7 +64,7 @@ runconfig:
     save_checkpoints_steps: 500
     keep_checkpoint_max: 2
     log_step_count_steps: 100
-    model_dir: "model_dir_unet_base_dagm"
+    model_dir: "model_dir_zid3d_base_dagm"
     cs_ip:
     mode: "train"
 

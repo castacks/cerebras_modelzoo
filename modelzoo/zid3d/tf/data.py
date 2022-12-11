@@ -18,7 +18,7 @@ UNet Data Input Pipeline
 
 import sys
 
-from modelzoo.unet.tf.input import (  # noqa
+from modelzoo.zid3d.tf.input import (  # noqa
     DAGM2007Dataset,
     DAGM2007TFRecordsDataset,
     SeverstalDataset,
