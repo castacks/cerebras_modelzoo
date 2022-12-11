@@ -342,7 +342,7 @@ class BatchNormalizationLayer(BaseLayer):
         if self.boundary_casting:
             inputs = boundary_cast(inputs)
 
-        output = self.layer_call(inputs, kwargs)
+        output = self.layer_call(inputs, **kwargs)
 
         if self.tf_summary:
             output = summary_layer(output)
