@@ -9,7 +9,7 @@ from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
 from tensorflow.python.keras.engine import base_layer_utils
 from tensorflow.python.keras.engine.input_spec import InputSpec
-# from tensorflow.python.keras.utils import tf_utils
+from tensorflow.python.keras.utils import tf_utils
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import nn
@@ -18,7 +18,7 @@ from tensorflow.python.ops import variables as tf_variables
 
 from modelzoo.common.tf.layers.BaseLayer import BaseLayer
 from modelzoo.common.tf.layers.utils import boundary_cast, summary_layer
-from modelzoo.zid3d.tf import utils_smart_cond as smart_cont_tools
+# from modelzoo.zid3d.tf import utils_smart_cond as smart_cont_tools
 
 class BatchNormalizationLayer(BaseLayer):
 
@@ -262,7 +262,7 @@ class BatchNormalizationLayer(BaseLayer):
             return (scale, offset)
 
         # Determine a boolean value for `training`: could be True, False, or None.
-        training_value = smart_cont_tools.constant_value(training)
+        training_value = tf_utils.constant_value(training)
         if training_value == False:  # pylint: disable=singleton-comparison,g-explicit-bool-comparison
             mean, variance = self.moving_mean, self.moving_variance
         else:
@@ -277,11 +277,11 @@ class BatchNormalizationLayer(BaseLayer):
             moving_mean = self.moving_mean
             moving_variance = self.moving_variance
 
-            mean = smart_cont_tools.smart_cond(
+            mean = tf_utils.smart_cond(
                     training,
                     lambda: mean,
                     lambda: ops.convert_to_tensor_v2(moving_mean))
-            variance = smart_cont_tools.smart_cond(
+            variance = tf_utils.smart_cond(
                         training,
                         lambda: variance,
                         lambda: ops.convert_to_tensor_v2(moving_variance))
@@ -297,7 +297,7 @@ class BatchNormalizationLayer(BaseLayer):
             def mean_update():
                 true_branch = lambda: _do_update(self.moving_mean, new_mean)
                 false_branch = lambda: self.moving_mean
-                return smart_cont_tools.smart_cond(training, true_branch, false_branch)
+                return tf_utils.smart_cond(training, true_branch, false_branch)
 
             def variance_update():
                 """Update the moving variance."""
@@ -314,7 +314,7 @@ class BatchNormalizationLayer(BaseLayer):
 
                 true_branch = lambda: _do_update(self.moving_variance, new_variance)
                 false_branch = lambda: self.moving_variance
-                return smart_cont_tools.smart_cond(training, true_branch, false_branch)
+                return tf_utils.smart_cond(training, true_branch, false_branch)
 
             self.add_update(mean_update)
             self.add_update(variance_update)
