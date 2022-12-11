@@ -45,7 +45,7 @@ color_codes = [
 
 
 _curdir = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_PARAMS_FILE = os.path.join(_curdir, "configs/params_dagm.yaml")
+DEFAULT_PARAMS_FILE = os.path.join(_curdir, "configs/params.yaml")
 
 
 def get_params(params_file=DEFAULT_PARAMS_FILE):

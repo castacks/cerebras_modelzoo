@@ -19,18 +19,18 @@ from modelzoo.zid3d.tf.utils import color_codes
 
 from modelzoo.zid3d.tf.BatchNorm import BatchNormalizationLayer
 
-class Zid3d(TFBaseModel):
+class Zid3dModel(TFBaseModel):
     """
     Zid3d model to be used with TF Estimator
     """
 
     def __init__(self, params):
-        super(Zid3d, self).__init__(
+        super(Zid3dModel, self).__init__(
             mixed_precision=params["model"]["mixed_precision"]
         )
-        
+
         mparams = params["model"]
-        
+
         self.initializer = mparams["initializer"]
         self.initializer_params = mparams.get("initializer_params")
         if self.initializer_params:
@@ -44,9 +44,11 @@ class Zid3d(TFBaseModel):
             self.bias_initializer = getattr(
                 tf.compat.v1.keras.initializers, self.bias_initializer
             )(**self.bias_initializer_params)
-        
+
         self.tf_summary = mparams["tf_summary"]
-        
+
+        self.mixed_precision = mparams["mixed_precision"]
+
         # Model trainer
         self.trainer = Trainer(
             params=params["optimizer"],
@@ -56,37 +58,37 @@ class Zid3d(TFBaseModel):
 
     def build_model(self, features, mode):
         x = features
-        
+
         is_training = mode == tf.estimator.ModeKeys.TRAIN
-        
+
         with tf.compat.v1.name_scope('feat_ext'):
             x = BatchNormalizationLayer(
                 axis=1,
                 name='batch_norm',
                 tf_summary=self.tf_summary,
-                dtype=self.dtype_policy,
+                dtype=self.policy,
             )(x)
-        
+
         return x
 
     def build_total_loss(self, logits, features, labels, mode):
         input_image = features
-        
+
         is_training = mode == tf.estimator.ModeKeys.TRAIN
-        
+
         loss = tf.compat.v1.losses.sigmoid_cross_entropy(
             features+1,
             features,
             reduction=Reduction.SUM_OVER_BATCH_SIZE,
         )
-        
+
         # loss = tf.keras.losses.MeanSquaredError(
         #     reduction=tf.keras.losses.Reduction.SUM_OVER_BATCH_SIZE
         # )(
-        #     labels, 
+        #     labels,
         #     input_image,
         # )
-        
+
         return loss
 
     def build_train_ops(self, total_loss):
@@ -99,15 +101,15 @@ class Zid3d(TFBaseModel):
         """
         Evaluation metrics
         """
-        
+
         pred = features
-        
+
         metrics_dict = dict()
-        
+
         metrics_dict["eval/accuracy"] = tf.compat.v1.metrics.accuracy(
             labels=pred+1, predictions=pred,
         )
-        
+
         return metrics_dict
 
     def get_evaluation_hooks(self, logits, labels, features):
