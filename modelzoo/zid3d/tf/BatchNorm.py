@@ -268,7 +268,7 @@ class BatchNormalizationLayer(BaseLayer):
         else:
             # Some of the computations here are not necessary when training==False
             # but not a constant. However, this makes the code simpler.
-            keep_dims = self.virtual_batch_size is not None or len(self.axis) > 1
+            keep_dims = len(self.axis) > 1
             mean, variance = self._moments(
                     math_ops.cast(inputs, self._param_dtype),
                     reduction_axes,
