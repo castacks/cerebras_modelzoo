@@ -19,7 +19,7 @@ train_input:
     shuffle_buffer_size: 10000
     dataset: "DAGM2007Dataset"
     description: "UNet base model params on DAGM 2007 dataset"
-    dataset_path: "/path/to/dagm2007/dataset"
+    dataset_path: "/data/dagm_2007"
     train_batch_size: 64
     eval_batch_size: 32
     normalize_data_method: "zero_centered"

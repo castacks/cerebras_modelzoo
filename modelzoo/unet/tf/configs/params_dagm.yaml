@@ -19,7 +19,7 @@ train_input:
     shuffle_buffer_size: 10000
     dataset: "DAGM2007Dataset"
     description: "UNet base model params on DAGM 2007 dataset"
-    dataset_path: "/path/to/dagm2007/dataset"
+    dataset_path: "/data/dagm_2007"
     train_batch_size: 64
     eval_batch_size: 32
     normalize_data_method: "zero_centered"
@@ -64,7 +64,7 @@ runconfig:
     save_checkpoints_steps: 500
     keep_checkpoint_max: 2
     log_step_count_steps: 100
-    model_dir: "model_dir_unet_base_dagm"
+    model_dir: "/project/Projects/cerebras_modelzoon_castacks/modelzoo/unet/tf/model_dir"
     cs_ip:
     mode: "train"
 
