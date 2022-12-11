@@ -19,9 +19,10 @@ from tensorflow.python.ops import variables as tf_variables
 from modelzoo.common.tf.layers.BaseLayer import BaseLayer
 from modelzoo.common.tf.layers.utils import boundary_cast, summary_layer
 
-_USE_V2_BEHAVIOR = True
 class BatchNormalizationLayer(BaseLayer):
-    
+
+    _USE_V2_BEHAVIOR = True
+
     def __init__(
         self,
         axis=-1,
@@ -46,7 +47,7 @@ class BatchNormalizationLayer(BaseLayer):
         super().__init__(
             boundary_casting, tf_summary, name=name, **kwargs
         )
-        
+
         if isinstance(axis, (list, tuple)):
             self.axis = axis[:]
         elif isinstance(axis, int):
@@ -69,11 +70,12 @@ class BatchNormalizationLayer(BaseLayer):
         self.gamma_regularizer = regularizers.get(gamma_regularizer)
         self.beta_constraint = constraints.get(beta_constraint)
         self.gamma_constraint = constraints.get(gamma_constraint)
-        
+
         self.fused = False
-        
+
+        self._trainable_var = None
         self.trainable = trainable
-    
+
     @property
     def trainable(self):
         return self._trainable
@@ -89,7 +91,7 @@ class BatchNormalizationLayer(BaseLayer):
             self._trainable_var = K.freezable_variable(
                     self._trainable, name=self.name + '_trainable')
         return self._trainable_var
-    
+
     @property
     def _param_dtype(self):
         # Raise parameters of fp16 batch norm to fp32
@@ -97,7 +99,7 @@ class BatchNormalizationLayer(BaseLayer):
             return dtypes.float32
         else:
             return self.dtype or dtypes.float32
-    
+
     def build(self, input_shape):
         input_shape = tensor_shape.TensorShape(input_shape)
         if not input_shape.ndims:
@@ -185,12 +187,12 @@ class BatchNormalizationLayer(BaseLayer):
                     synchronization=tf_variables.VariableSynchronization.ON_READ,
                     trainable=False,
                     aggregation=tf_variables.VariableAggregation.MEAN,
-                    experimental_autocast=False)                                                                                    moving_stddev_initializer)
+                    experimental_autocast=False)
         finally:
             if partitioner:
                 self._scope.set_partitioner(partitioner)
         self.built = True
-    
+
     def _assign_moving_average(self, variable, value, momentum, inputs_size):
         with K.name_scope('AssignMovingAvg') as scope:
             with ops.colocate_with(variable):
@@ -208,10 +210,10 @@ class BatchNormalizationLayer(BaseLayer):
         with K.name_scope('AssignNewValue') as scope:
             with ops.colocate_with(variable):
                 return state_ops.assign(variable, value, name=scope)
-    
+
     def _calculate_mean_and_var(self, inputs, reduction_axes, keep_dims):
         return nn.moments(inputs, reduction_axes, keep_dims=keep_dims)
-    
+
     def _moments(self, inputs, reduction_axes, keep_dims):
         mean, variance = self._calculate_mean_and_var(inputs, reduction_axes, keep_dims)
         return mean, variance
@@ -229,7 +231,7 @@ class BatchNormalizationLayer(BaseLayer):
                 # model.
                 training = self.trainable
         return training
-    
+
     def layer_call(self, inputs, training=None):
         training = self._get_training_value(training)
 
@@ -275,11 +277,11 @@ class BatchNormalizationLayer(BaseLayer):
             moving_variance = self.moving_variance
 
             mean = tf_utils.smart_cond(
-                    training, 
+                    training,
                     lambda: mean,
                     lambda: ops.convert_to_tensor_v2(moving_mean))
             variance = tf_utils.smart_cond(
-                        training, 
+                        training,
                         lambda: variance,
                         lambda: ops.convert_to_tensor_v2(moving_variance))
 
@@ -334,17 +336,17 @@ class BatchNormalizationLayer(BaseLayer):
         outputs.set_shape(input_shape)
 
         return outputs
-    
+
     def call(self, inputs, **kwargs):
         if self.boundary_casting:
             inputs = boundary_cast(inputs)
-            
+
         output = self.layer_call(inputs, kwargs)
-        
+
         if self.tf_summary:
             output = summary_layer(output)
-        
+
         return output
-    
+
     def compute_output_shape(self, input_shape):
         return input_shape
