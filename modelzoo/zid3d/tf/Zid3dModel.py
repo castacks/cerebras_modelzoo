@@ -75,7 +75,7 @@ class Zid3d(TFBaseModel):
         is_training = mode == tf.estimator.ModeKeys.TRAIN
         
         loss = tf.compat.v1.losses.sigmoid_cross_entropy(
-            labels,
+            features+1,
             features,
             reduction=Reduction.SUM_OVER_BATCH_SIZE,
         )
@@ -105,7 +105,7 @@ class Zid3d(TFBaseModel):
         metrics_dict = dict()
         
         metrics_dict["eval/accuracy"] = tf.compat.v1.metrics.accuracy(
-            labels=labels, predictions=pred,
+            labels=pred+1, predictions=pred,
         )
         
         return metrics_dict

@@ -18,14 +18,14 @@ UNet Model function to be used with TF Estimator API
 import tensorflow as tf
 
 from modelzoo.common.tf.estimator.cs_estimator_spec import CSEstimatorSpec
-from modelzoo.unet.tf.UNetModel import UNetModel
+from modelzoo.zid3d.tf.Zid3dModel import Zid3dModel
 
 
 def model_fn(features, labels, mode, params):
     """
     Model function to be used with TF Estimator API
     """
-    model = UNetModel(params)
+    model = Zid3dModel(params)
     logits = model(features, mode)
     loss = model.build_total_loss(logits, features, labels, mode)
 
