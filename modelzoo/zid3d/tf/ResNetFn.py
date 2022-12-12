@@ -8,12 +8,14 @@ from tensorflow.python.keras import layers
 from modelzoo.common.tf.layers.ActivationLayer import ActivationLayer
 from modelzoo.common.tf.layers.AddLayer import AddLayer
 from modelzoo.common.tf.layers.Conv2DLayer import Conv2DLayer
+from modelzoo.common.tf.layers.MaxPool2DLayer import MaxPool2DLayer
 
 from modelzoo.zid3d.tf.NaiveBatchNorm import NaiveBatchNormalizationLayer
 
 def ResNet( stack_fn,
             preact,
             use_bias,
+            data_format='channels_first',
             model_name='resnet',
             input_tensor=None,
             input_shape=None,
@@ -39,6 +41,7 @@ def ResNet( stack_fn,
         #         padding=((3, 3), (3, 3)), name='conv1_pad')(img_input)
         x = Conv2DLayer(64, 7, strides=2, use_bias=use_bias, name='conv1_conv',
                         padding='same',
+                        data_format=data_format,
                         boundary_casting=boundary_casting,
                         tf_summary=tf_summary, 
                         dtype=dtype)(img_input)
@@ -55,11 +58,11 @@ def ResNet( stack_fn,
                                 dtype=dtype)(x)
 
         # x = layers.ZeroPadding2D(padding=((1, 1), (1, 1)), name='pool1_pad')(x)
-        x = Conv2DLayer(3, strides=2, name='pool1_pool',
-                        padding='same',
-                        boundary_casting=boundary_casting,
-                        tf_summary=tf_summary, 
-                        dtype=dtype)(x)
+        x = MaxPool2DLayer( 3, strides=2, name='pool1_pool',
+                            data_format=data_format,
+                            boundary_casting=boundary_casting,
+                            tf_summary=tf_summary, 
+                            dtype=dtype )(x)
 
         x = stack_fn(x,
                      activation=activation,
@@ -82,6 +85,7 @@ def ResNet( stack_fn,
 
 def block1( x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None,
             activation='relu6',
+            data_format='channels_first',
             boundary_casting=False,
             tf_summary=False,
             dtype=dtypes.float32, ):
@@ -104,6 +108,7 @@ def block1( x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None,
     if conv_shortcut:
         shortcut = Conv2DLayer(
                 4 * filters, 1, strides=stride, name=name + '_0_conv',
+                data_format=data_format,
                 boundary_casting=boundary_casting,
                 tf_summary=tf_summary, 
                 dtype=dtype)(x)
@@ -116,6 +121,7 @@ def block1( x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None,
         shortcut = x
 
     x = Conv2DLayer(filters, 1, strides=stride, name=name + '_1_conv',
+                    data_format=data_format,
                     boundary_casting=boundary_casting,
                     tf_summary=tf_summary, 
                     dtype=dtype)(x)
@@ -131,6 +137,7 @@ def block1( x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None,
 
     x = Conv2DLayer(
             filters, kernel_size, padding='same', name=name + '_2_conv',
+            data_format=data_format,
             boundary_casting=boundary_casting,
             tf_summary=tf_summary, 
             dtype=dtype)(x)
@@ -145,6 +152,7 @@ def block1( x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None,
                         dtype=dtype)(x)
 
     x = Conv2DLayer(4 * filters, 1, name=name + '_3_conv',
+                    data_format=data_format,
                     boundary_casting=boundary_casting,
                     tf_summary=tf_summary, 
                     dtype=dtype)(x)
