@@ -15,11 +15,11 @@ from modelzoo.zid3d.tf.NaiveBatchNorm import NaiveBatchNormalizationLayer
 def ResNet( stack_fn,
             preact,
             use_bias,
-            data_format='channels_first',
             model_name='resnet',
             input_tensor=None,
             input_shape=None,
             activation='relu6',
+            data_format='channels_first',
             boundary_casting=False,
             tf_summary=False,
             dtype=dtypes.float32,):
@@ -66,6 +66,7 @@ def ResNet( stack_fn,
 
         x = stack_fn(x,
                      activation=activation,
+                     data_format=data_format,
                      boundary_casting=boundary_casting,
                      tf_summary=tf_summary, 
                      dtype=dtype)
@@ -174,6 +175,7 @@ def block1( x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None,
 
 def stack1( x, filters, blocks, stride1=2, name=None,
             activation='relu6',
+            data_format='channels_first',
             boundary_casting=False,
             tf_summary=False,
             dtype=dtypes.float32, ):
@@ -191,12 +193,14 @@ def stack1( x, filters, blocks, stride1=2, name=None,
     """
     x = block1(x, filters, stride=stride1, name=name + '_block1',
                activation=activation,
+               data_format=data_format,
                boundary_casting=boundary_casting,
                tf_summary=tf_summary,
                dtype=dtype)
     for i in range(2, blocks + 1):
         x = block1( x, filters, conv_shortcut=False, name=name + '_block' + str(i),
                     activation=activation,
+                    data_format=data_format,
                     boundary_casting=boundary_casting,
                     tf_summary=tf_summary,
                     dtype=dtype )
@@ -206,6 +210,7 @@ def ResNet50(
         input_tensor=None,
         input_shape=None,
         activation='relu6',
+        data_format='channels_first',
         boundary_casting=False,
         tf_summary=False,
         dtype=dtypes.float32, ):
@@ -213,12 +218,14 @@ def ResNet50(
 
     def stack_fn(x, 
                  activation='relu6',
+                 data_format='channels_first',
                  boundary_casting=False,
                  tf_summary=False,
                  dtype=dtypes.float32):
         
         add_kwargs = dict(
             activation=activation,
+            data_format=data_format,
             boundary_casting=boundary_casting,
             tf_summary=tf_summary,
             dtype=dtype)
@@ -231,8 +238,11 @@ def ResNet50(
         x = stack1(x, 512, 3, stride1=2, name='conv5', **add_kwargs) # 1/32
         return x
 
-    return ResNet(stack_fn, False, True, 'resnet50', input_tensor, input_shape, 
-                activation=activation,
-                boundary_casting=boundary_casting,
-                tf_summary=tf_summary,
-                dtype=dtype)
+    return ResNet( stack_fn, False, True, 'resnet50', 
+                   input_tensor=input_tensor, 
+                   input_shape=input_shape, 
+                   activation=activation,
+                   data_format=data_format,
+                   boundary_casting=boundary_casting,
+                   tf_summary=tf_summary,
+                   dtype=dtype )
