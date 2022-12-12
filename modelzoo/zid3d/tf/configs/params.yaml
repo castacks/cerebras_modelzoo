@@ -26,6 +26,7 @@ train_input:
     only_defective_images: True
     augment_data: True
     image_shape: [256, 256, 1]
+    mask_shape: [8, 8, 1] # 1/32
     class_id: 1
     num_classes: 2
 

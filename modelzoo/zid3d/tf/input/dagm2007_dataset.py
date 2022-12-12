@@ -40,6 +40,7 @@ class DAGM2007Dataset:
 
         self.mixed_precision = params["model"]["mixed_precision"]
         self.image_shape = params["train_input"]["image_shape"]
+        self.mask_shape = params["train_input"]["mask_shape"]
         self.num_classes = params["train_input"]["num_classes"]
         self.normalize_data_method = params["train_input"][
             "normalize_data_method"
@@ -192,8 +193,8 @@ class DAGM2007Dataset:
 
                 mask_image = tf.image.resize_with_crop_or_pad(
                     mask_image,
-                    target_height=self.image_shape[0],
-                    target_width=self.image_shape[1],
+                    target_height=self.mask_shape[0],
+                    target_width=self.mask_shape[1],
                 )
 
             if self.data_format == "channels_first":
