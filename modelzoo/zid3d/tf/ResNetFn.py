@@ -131,7 +131,7 @@ def block1( x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None,
             boundary_casting=boundary_casting,
             tf_summary=tf_summary, 
             dtype=dtype)(x)
-    x = ActivationLayer('activation', name=name + '_1_relu',
+    x = ActivationLayer(activation, name=name + '_1_relu',
                         boundary_casting=boundary_casting,
                         tf_summary=tf_summary, 
                         dtype=dtype)(x)
