@@ -1,4 +1,5 @@
 
+from tensorflow.keras.mixed_precision.experimental import Policy
 
 from tensorflow.python.ops import nn
 
@@ -50,11 +51,12 @@ class NaiveBatchNormalizationLayer(BaseLayer):
 
     @property
     def _param_dtype(self):
-        # Raise parameters of fp16 batch norm to fp32
-        if self.dtype == dtypes.float16 or self.dtype == dtypes.bfloat16:
-            return dtypes.float32
-        else:
-            return self.dtype or dtypes.float32
+        # # Raise parameters of fp16 batch norm to fp32
+        # if self.dtype == dtypes.float16 or self.dtype == dtypes.bfloat16:
+        #     return dtypes.float32
+        # else:
+        #     return self.dtype or dtypes.float32
+        return Policy('mixed_float16', loss_scale=False)
 
     def build(self, input_shape):
         input_shape = tensor_shape.TensorShape(input_shape)

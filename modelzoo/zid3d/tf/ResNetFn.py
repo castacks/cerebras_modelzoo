@@ -1,6 +1,8 @@
 
 import tensorflow as tf
 
+from tensorflow.keras.mixed_precision.experimental import Policy
+
 from tensorflow.python.framework import dtypes
 from tensorflow.python.keras import backend
 from tensorflow.python.keras import layers
@@ -12,6 +14,8 @@ from modelzoo.common.tf.layers.MaxPool2DLayer import MaxPool2DLayer
 
 from modelzoo.zid3d.tf.NaiveBatchNorm import NaiveBatchNormalizationLayer
 
+_DEFAULT_POLICY = Policy('mixed_float16', loss_scale=None)
+
 def ResNet( stack_fn,
             preact,
             use_bias,
@@ -22,9 +26,22 @@ def ResNet( stack_fn,
             data_format='channels_first',
             boundary_casting=False,
             tf_summary=False,
-            dtype=dtypes.float32,):
+            dtype=_DEFAULT_POLICY,):
     
     assert input_tensor is not None or input_shape is not None, 'Either input_tensor or input_shape must be specified. '
+
+    add_kwargs_conv = dict(
+        data_format=data_format,
+        boundary_casting=boundary_casting,
+        tf_summary=tf_summary,
+        dtype=dtype
+    )
+    
+    add_kwargs_bn_act = dict(
+        boundary_casting=boundary_casting,
+        tf_summary=tf_summary,
+        dtype=dtype
+    )
 
     with tf.compat.v1.name_scope(model_name):
         if input_tensor is None:
@@ -41,28 +58,18 @@ def ResNet( stack_fn,
         #         padding=((3, 3), (3, 3)), name='conv1_pad')(img_input)
         x = Conv2DLayer(64, 7, strides=2, use_bias=use_bias, name='conv1_conv',
                         padding='same',
-                        data_format=data_format,
-                        boundary_casting=boundary_casting,
-                        tf_summary=tf_summary, 
-                        dtype=dtype)(img_input)
+                        **add_kwargs_conv)(img_input)
 
         if not preact:
             x = NaiveBatchNormalizationLayer(
                     axis=bn_axis, epsilon=1.001e-5, name='conv1_bn',
-                    boundary_casting=boundary_casting,
-                    tf_summary=tf_summary, 
-                    dtype=dtype)(x)
+                    **add_kwargs_bn_act)(x)
             x = ActivationLayer(activation, name='conv1_relu',
-                                boundary_casting=boundary_casting,
-                                tf_summary=tf_summary, 
-                                dtype=dtype)(x)
+                                **add_kwargs_bn_act)(x)
 
         # x = layers.ZeroPadding2D(padding=((1, 1), (1, 1)), name='pool1_pad')(x)
         x = MaxPool2DLayer( 3, strides=2, name='pool1_pool',
-                            data_format=data_format,
-                            boundary_casting=boundary_casting,
-                            tf_summary=tf_summary, 
-                            dtype=dtype )(x)
+                            **add_kwargs_conv )(x)
 
         x = stack_fn(x,
                      activation=activation,
@@ -74,13 +81,9 @@ def ResNet( stack_fn,
         if preact:
             x = NaiveBatchNormalizationLayer(
                     axis=bn_axis, epsilon=1.001e-5, name='post_bn',
-                    boundary_casting=boundary_casting,
-                    tf_summary=tf_summary, 
-                    dtype=dtype)(x)
+                    **add_kwargs_bn_act)(x)
             x = ActivationLayer(activation, name='post_relu',
-                                boundary_casting=boundary_casting,
-                                tf_summary=tf_summary, 
-                                dtype=dtype)(x)
+                                **add_kwargs_bn_act)(x)
 
         return x
 
@@ -89,7 +92,7 @@ def block1( x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None,
             data_format='channels_first',
             boundary_casting=False,
             tf_summary=False,
-            dtype=dtypes.float32, ):
+            dtype=_DEFAULT_POLICY, ):
     """A residual block.
 
     Arguments:
@@ -104,73 +107,61 @@ def block1( x, filters, kernel_size=3, stride=1, conv_shortcut=True, name=None,
     Returns:
         Output tensor for the residual block.
     """
+    
+    add_kwargs_conv = dict(
+        data_format=data_format,
+        boundary_casting=boundary_casting,
+        tf_summary=tf_summary,
+        dtype=dtype
+    )
+    
+    add_kwargs_bn_act = dict(
+        boundary_casting=boundary_casting,
+        tf_summary=tf_summary,
+        dtype=dtype
+    )
+    
     bn_axis = 1
 
     if conv_shortcut:
         shortcut = Conv2DLayer(
                 4 * filters, 1, strides=stride, name=name + '_0_conv',
-                data_format=data_format,
-                boundary_casting=boundary_casting,
-                tf_summary=tf_summary, 
-                dtype=dtype)(x)
+                **add_kwargs_conv)(x)
         shortcut = NaiveBatchNormalizationLayer(
                 axis=bn_axis, epsilon=1.001e-5, name=name + '_0_bn',
-                boundary_casting=boundary_casting,
-                tf_summary=tf_summary, 
-                dtype=dtype)(shortcut)
+                **add_kwargs_bn_act)(shortcut)
     else:
         shortcut = x
 
     x = Conv2DLayer(filters, 1, strides=stride, name=name + '_1_conv',
-                    data_format=data_format,
-                    boundary_casting=boundary_casting,
-                    tf_summary=tf_summary, 
-                    dtype=dtype)(x)
+                    **add_kwargs_conv)(x)
     x = NaiveBatchNormalizationLayer(
             axis=bn_axis, epsilon=1.001e-5, name=name + '_1_bn',
-            boundary_casting=boundary_casting,
-            tf_summary=tf_summary, 
-            dtype=dtype)(x)
+            **add_kwargs_bn_act)(x)
     x = ActivationLayer(activation, name=name + '_1_relu',
-                        boundary_casting=boundary_casting,
-                        tf_summary=tf_summary, 
-                        dtype=dtype)(x)
+                        **add_kwargs_bn_act)(x)
 
     x = Conv2DLayer(
             filters, kernel_size, padding='same', name=name + '_2_conv',
-            data_format=data_format,
-            boundary_casting=boundary_casting,
-            tf_summary=tf_summary, 
-            dtype=dtype)(x)
+            **add_kwargs_conv)(x)
     x = NaiveBatchNormalizationLayer(
             axis=bn_axis, epsilon=1.001e-5, name=name + '_2_bn',
-            boundary_casting=boundary_casting,
-            tf_summary=tf_summary, 
-            dtype=dtype)(x)
+            **add_kwargs_bn_act)(x)
     x = ActivationLayer(activation, name=name + '_2_relu',
-                        boundary_casting=boundary_casting,
-                        tf_summary=tf_summary, 
-                        dtype=dtype)(x)
+                        **add_kwargs_bn_act)(x)
 
     x = Conv2DLayer(4 * filters, 1, name=name + '_3_conv',
-                    data_format=data_format,
-                    boundary_casting=boundary_casting,
-                    tf_summary=tf_summary, 
-                    dtype=dtype)(x)
+                    **add_kwargs_conv)(x)
     x = NaiveBatchNormalizationLayer(
             axis=bn_axis, epsilon=1.001e-5, name=name + '_3_bn',
-            boundary_casting=boundary_casting,
-            tf_summary=tf_summary, 
-            dtype=dtype)(x)
+            **add_kwargs_bn_act)(x)
 
     x = AddLayer(name=name + '_add',
                  boundary_casting=boundary_casting,
                  tf_summary=tf_summary, 
                  dtype=dtype)([shortcut, x])
     x = ActivationLayer(activation, name=name + '_out',
-                        boundary_casting=boundary_casting,
-                        tf_summary=tf_summary, 
-                        dtype=dtype)(x)
+                        **add_kwargs_bn_act)(x)
     return x
 
 def stack1( x, filters, blocks, stride1=2, name=None,
@@ -178,7 +169,7 @@ def stack1( x, filters, blocks, stride1=2, name=None,
             data_format='channels_first',
             boundary_casting=False,
             tf_summary=False,
-            dtype=dtypes.float32, ):
+            dtype=_DEFAULT_POLICY, ):
     """A set of stacked residual blocks.
 
     Arguments:
@@ -191,19 +182,20 @@ def stack1( x, filters, blocks, stride1=2, name=None,
     Returns:
         Output tensor for the stacked blocks.
     """
+    
+    add_kwargs = dict(
+        activation=activation,
+        data_format=data_format,
+        boundary_casting=boundary_casting,
+        tf_summary=tf_summary,
+        dtype=dtype
+    )
+    
     x = block1(x, filters, stride=stride1, name=name + '_block1',
-               activation=activation,
-               data_format=data_format,
-               boundary_casting=boundary_casting,
-               tf_summary=tf_summary,
-               dtype=dtype)
+               **add_kwargs)
     for i in range(2, blocks + 1):
         x = block1( x, filters, conv_shortcut=False, name=name + '_block' + str(i),
-                    activation=activation,
-                    data_format=data_format,
-                    boundary_casting=boundary_casting,
-                    tf_summary=tf_summary,
-                    dtype=dtype )
+                    **add_kwargs )
     return x
 
 def ResNet50(
@@ -213,7 +205,7 @@ def ResNet50(
         data_format='channels_first',
         boundary_casting=False,
         tf_summary=False,
-        dtype=dtypes.float32, ):
+        dtype=_DEFAULT_POLICY, ):
     """Instantiates the ResNet50 architecture."""
 
     def stack_fn(x, 
@@ -221,7 +213,7 @@ def ResNet50(
                  data_format='channels_first',
                  boundary_casting=False,
                  tf_summary=False,
-                 dtype=dtypes.float32):
+                 dtype=_DEFAULT_POLICY):
         
         add_kwargs = dict(
             activation=activation,
