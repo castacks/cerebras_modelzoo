@@ -254,53 +254,53 @@ class BatchNormalizationLayer(BaseLayer):
 
         # Determine a boolean value for `training`: could be True, False, or None.
         training_value = tf_utils.constant_value(training)
-        # if training_value == False:  # pylint: disable=singleton-comparison,g-explicit-bool-comparison
-        #     mean, variance = self.moving_mean, self.moving_variance
-        # else:
-        #     # Some of the computations here are not necessary when training==False
-        #     # but not a constant. However, this makes the code simpler.
-        #     keep_dims = len(self.axis) > 1
-        #     mean, variance = self._moments(
-        #             math_ops.cast(inputs, self._param_dtype),
-        #             reduction_axes,
-        #             keep_dims=keep_dims)
+        if training_value == False:  # pylint: disable=singleton-comparison,g-explicit-bool-comparison
+            mean, variance = self.moving_mean, self.moving_variance
+        else:
+            # Some of the computations here are not necessary when training==False
+            # but not a constant. However, this makes the code simpler.
+            keep_dims = len(self.axis) > 1
+            mean, variance = self._moments(
+                    math_ops.cast(inputs, self._param_dtype),
+                    reduction_axes,
+                    keep_dims=keep_dims)
 
-        #     moving_mean = self.moving_mean
-        #     moving_variance = self.moving_variance
+            moving_mean = self.moving_mean
+            moving_variance = self.moving_variance
 
-        #     mean = tf_utils.smart_cond(
-        #             training,
-        #             lambda: mean,
-        #             lambda: ops.convert_to_tensor_v2(moving_mean))
-        #     variance = tf_utils.smart_cond(
-        #                 training,
-        #                 lambda: variance,
-        #                 lambda: ops.convert_to_tensor_v2(moving_variance))
+            mean = tf_utils.smart_cond(
+                    training,
+                    lambda: mean,
+                    lambda: ops.convert_to_tensor_v2(moving_mean))
+            variance = tf_utils.smart_cond(
+                        training,
+                        lambda: variance,
+                        lambda: ops.convert_to_tensor_v2(moving_variance))
 
-        #     new_mean, new_variance = mean, variance
+            new_mean, new_variance = mean, variance
 
-        #     input_batch_size = None
+            input_batch_size = None
 
-        #     def _do_update(var, value):
-        #         """Compute the updates for mean and variance."""
-        #         return self._assign_moving_average(var, value, self.momentum, input_batch_size)
+            def _do_update(var, value):
+                """Compute the updates for mean and variance."""
+                return self._assign_moving_average(var, value, self.momentum, input_batch_size)
 
-        #     def mean_update():
-        #         true_branch = lambda: _do_update(self.moving_mean, new_mean)
-        #         false_branch = lambda: self.moving_mean
-        #         return tf_utils.smart_cond(training, true_branch, false_branch)
+            def mean_update():
+                true_branch = lambda: _do_update(self.moving_mean, new_mean)
+                false_branch = lambda: self.moving_mean
+                return tf_utils.smart_cond(training, true_branch, false_branch)
 
-        #     def variance_update():
-        #         """Update the moving variance."""
+            def variance_update():
+                """Update the moving variance."""
 
-        #         true_branch = lambda: _do_update(self.moving_variance, new_variance)
-        #         false_branch = lambda: self.moving_variance
-        #         return tf_utils.smart_cond(training, true_branch, false_branch)
+                true_branch = lambda: _do_update(self.moving_variance, new_variance)
+                false_branch = lambda: self.moving_variance
+                return tf_utils.smart_cond(training, true_branch, false_branch)
 
-        #     self.add_update(mean_update)
-        #     self.add_update(variance_update)
+            self.add_update(mean_update)
+            self.add_update(variance_update)
 
-        mean, variance = self.moving_mean, self.moving_variance
+        # mean, variance = self.moving_mean, self.moving_variance
 
         mean = math_ops.cast(mean, inputs.dtype)
         variance = math_ops.cast(variance, inputs.dtype)
@@ -326,7 +326,6 @@ class BatchNormalizationLayer(BaseLayer):
             inputs = boundary_cast(inputs)
 
         output = self.layer_call(inputs, **kwargs)
-        # output = inputs + 1
 
         if self.tf_summary:
             output = summary_layer(output)

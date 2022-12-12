@@ -17,7 +17,8 @@ from modelzoo.common.tf.optimizers.Trainer import Trainer
 from modelzoo.common.tf.TFBaseModel import TFBaseModel
 from modelzoo.zid3d.tf.utils import color_codes
 
-from modelzoo.zid3d.tf.BatchNorm import BatchNormalizationLayer
+# from modelzoo.zid3d.tf.BatchNorm import BatchNormalizationLayer
+from modelzoo.zid3d.tf.NaiveBatchNorm import NaiveBatchNormalizationLayer
 
 class Zid3dModel(TFBaseModel):
     """
@@ -69,7 +70,7 @@ class Zid3dModel(TFBaseModel):
         is_training = mode == tf.estimator.ModeKeys.TRAIN
 
         with tf.compat.v1.name_scope('feat_ext'):
-            x = BatchNormalizationLayer(
+            x = NaiveBatchNormalizationLayer(
                 axis=1,
                 name='batch_norm',
                 tf_summary=self.tf_summary,
