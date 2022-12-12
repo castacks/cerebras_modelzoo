@@ -15,10 +15,11 @@ from modelzoo.common.tf.layers.BaseLayer import BaseLayer
 from modelzoo.common.tf.layers.utils import boundary_cast, summary_layer
 # from modelzoo.zid3d.tf import utils_smart_cond as smart_cont_tools
 
-class NavieBatchNormalizationLayer(BaseLayer):
+class NaiveBatchNormalizationLayer(BaseLayer):
 
     def __init__(
         self,
+        axis=1,
         epsilon=1e-3,
         beta_initializer='zeros',
         gamma_initializer='ones',
@@ -37,15 +38,15 @@ class NavieBatchNormalizationLayer(BaseLayer):
         )
 
         self.epsilon = epsilon
-        
+
         self.beta_initializer = initializers.get(beta_initializer)
         self.gamma_initializer = initializers.get(gamma_initializer)
         self.beta_regularizer = regularizers.get(beta_regularizer)
         self.gamma_regularizer = regularizers.get(gamma_regularizer)
         self.beta_constraint = constraints.get(beta_constraint)
         self.gamma_constraint = constraints.get(gamma_constraint)
-        
-        self.axis = [1]
+
+        self.axis = [axis]
 
     @property
     def _param_dtype(self):
@@ -62,7 +63,7 @@ class NavieBatchNormalizationLayer(BaseLayer):
         ndims = len(input_shape)
 
         axis_to_dim = {x: input_shape.dims[x].value for x in self.axis}
-        
+
         self.input_spec = InputSpec(ndim=ndims, axes=axis_to_dim)
 
         param_shape = (list(axis_to_dim.values())[0],)
@@ -97,7 +98,7 @@ class NavieBatchNormalizationLayer(BaseLayer):
         return mean, variance
 
     def layer_call(self, inputs, training=None):
-        
+
         # Compute the axes along which to reduce the mean / variance
         input_shape = inputs.shape
         ndims = len(input_shape)
