@@ -18,8 +18,9 @@ from modelzoo.common.tf.TFBaseModel import TFBaseModel
 from modelzoo.zid3d.tf.utils import color_codes
 
 # from modelzoo.zid3d.tf.BatchNorm import BatchNormalizationLayer
-from modelzoo.zid3d.tf.NaiveBatchNorm import NaiveBatchNormalizationLayer
-from modelzoo.zid3d.tf.ResNetFn import ResNet50
+# from modelzoo.zid3d.tf.NaiveBatchNorm import NaiveBatchNormalizationLayer
+# from modelzoo.zid3d.tf.ResNetFn import ResNet50
+from modelzoo.zid3d.tf.sanity_check import func_for_build
 
 class Zid3dModel(TFBaseModel):
     """
@@ -78,10 +79,15 @@ class Zid3dModel(TFBaseModel):
             #     dtype=self.policy,
             # )(x)
             
-            x = ResNet50(input_tensor=x,
-                         boundary_casting=self.boundary_casting,
-                         tf_summary=self.tf_summary,
-                         dtype=self.policy)
+            # x = ResNet50(input_tensor=x,
+            #              boundary_casting=self.boundary_casting,
+            #              tf_summary=self.tf_summary,
+            #              dtype=self.policy)
+            
+            x = func_for_build(x,
+                               boundary_casting=self.boundary_casting,
+                               tf_summary=self.tf_summary,
+                               dtype=self.policy)
             
         ##### Output
         logits = Conv2DLayer(
