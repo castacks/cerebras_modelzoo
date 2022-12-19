@@ -45,7 +45,7 @@ def func_for_build(x,
     )
 
     # with tf.compat.v1.name_scope(model_name):
-    x = Conv2DLayer(64, 3,
+    x = Conv2DLayer(64, 7,
                     strides=(1, 1),
                     padding='same',
                     use_bias=True,
