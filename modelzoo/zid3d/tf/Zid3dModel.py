@@ -84,11 +84,21 @@ class Zid3dModel(TFBaseModel):
             #              tf_summary=self.tf_summary,
             #              dtype=self.policy)
 
-            x = func_for_build(x,
-                               model_name='conv1',
-                               boundary_casting=self.boundary_casting,
-                               tf_summary=self.tf_summary,
-                               dtype=self.policy)
+            # x = func_for_build(x,
+            #                    model_name='conv1',
+            #                    boundary_casting=self.boundary_casting,
+            #                    tf_summary=self.tf_summary,
+            #                    dtype=self.policy)
+            
+            x = Conv2DLayer(64, 3,
+                        strides=(1, 1),
+                        padding='same',
+                        use_bias=True,
+                        name='conv0',
+                        boundary_casting=self.boundary_casting,
+                        tf_summary=self.tf_summary,
+                        dtype=self.policy
+                        )(x)
 
         ##### Output
         logits = Conv2DLayer(
