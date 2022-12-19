@@ -43,6 +43,8 @@ def func_for_build(x,
         tf_summary=tf_summary,
         dtype=dtype
     )
+    
+    bn_axis = 1
 
     # with tf.compat.v1.name_scope(model_name):
     x = Conv2DLayer(64, 7,
@@ -52,5 +54,12 @@ def func_for_build(x,
                     name='conv0',
                     **kwargs_conv
                     )(x)
+    
+    # x = NaiveBatchNormalizationLayer(
+    #         axis=bn_axis, epsilon=1.001e-5, name='conv1_bn',
+    #         **kwargs_bn)(x)
+    
+    x = ActivationLayer(activation, name='conv1_relu',
+                        **kwargs_act)(x)
 
     return x
