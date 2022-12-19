@@ -89,12 +89,13 @@ class Zid3dModel(TFBaseModel):
             #                    boundary_casting=self.boundary_casting,
             #                    tf_summary=self.tf_summary,
             #                    dtype=self.policy)
-            
+
             x = Conv2DLayer(64, 3,
                         strides=(1, 1),
                         padding='same',
                         use_bias=True,
                         name='conv0',
+                        data_format='channels_first',
                         boundary_casting=self.boundary_casting,
                         tf_summary=self.tf_summary,
                         dtype=self.policy
