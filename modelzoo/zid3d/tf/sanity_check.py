@@ -44,13 +44,13 @@ def func_for_build(x,
         dtype=dtype
     )
 
-    with tf.compat.v1.name_scope(model_name):
-        x = Conv2DLayer(64, 3,
-                        strides=(1, 1),
-                        padding='same',
-                        use_bias=True,
-                        name='conv0',
-                        **kwargs_conv
-                        )(x)
+    # with tf.compat.v1.name_scope(model_name):
+    x = Conv2DLayer(64, 3,
+                    strides=(1, 1),
+                    padding='same',
+                    use_bias=True,
+                    name='conv0',
+                    **kwargs_conv
+                    )(x)
 
-        return x
+    return x
