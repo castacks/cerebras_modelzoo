@@ -29,14 +29,14 @@ def func_for_build(x,
         tf_summary=tf_summary,
         dtype=dtype
     )
-    
+
     # Additional kwargs for batch normalization.
     kwargs_bn = dict(
         boundary_casting=boundary_casting,
         tf_summary=tf_summary,
         dtype=dtype
     )
-    
+
     # Additional kwargs for activation layers.
     kwargs_act = dict(
         boundary_casting=boundary_casting,
@@ -45,12 +45,12 @@ def func_for_build(x,
     )
 
     with tf.compat.v1.name_scope(model_name):
-        x = Conv2DLayer(64, 7, 
-                        strides=1,
+        x = Conv2DLayer(64, 3,
+                        strides=(1, 1),
                         padding='same',
-                        use_bias=True, 
+                        use_bias=True,
                         name='conv0',
                         **kwargs_conv
                         )(x)
-        
+
         return x

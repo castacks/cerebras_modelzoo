@@ -55,7 +55,7 @@ class Zid3dModel(TFBaseModel):
         self.tf_summary = mparams["tf_summary"]
 
         self.mixed_precision = mparams["mixed_precision"]
-        
+
         self.data_format = mparams["data_format"]
         self.enable_bias = mparams["enable_bias"]
 
@@ -78,17 +78,18 @@ class Zid3dModel(TFBaseModel):
             #     tf_summary=self.tf_summary,
             #     dtype=self.policy,
             # )(x)
-            
+
             # x = ResNet50(input_tensor=x,
             #              boundary_casting=self.boundary_casting,
             #              tf_summary=self.tf_summary,
             #              dtype=self.policy)
-            
+
             x = func_for_build(x,
+                               model_name='conv1',
                                boundary_casting=self.boundary_casting,
                                tf_summary=self.tf_summary,
                                dtype=self.policy)
-            
+
         ##### Output
         logits = Conv2DLayer(
             filters=self.num_output_channels,
